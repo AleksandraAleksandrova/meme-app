@@ -19,6 +19,8 @@ git_integration = GithubIntegration(
     app_key,
 )
 
+
+
 @app.route("/", methods=['POST'])
 def bot():
     payload = request.json
@@ -37,9 +39,9 @@ def bot():
     )
     repo = git_connection.get_repo(f"{owner}/{repo_name}")
 
-    issue = repo.get_issue(number=payload['issues']['number'])
+    issue = repo.get_issue(number=payload['issue']['number'])
 
-    response = requests.get(url='https://meme-api.herokuapp.com/gimme')
+    response = requests.get(url='https://meme-api.com/gimme')
     if response.status_code != 200:
         return 'ok'
 
