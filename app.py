@@ -23,7 +23,7 @@ git_integration = GithubIntegration(
 def bot():
     payload = request.json
 
-    if not all(k in payload.keys() for k in ['action', 'pull_request']) and \
+    if not all(k in payload.keys() for k in ['action', 'issue']) and \
             payload['action'] == 'opened':
         return "ok"
 
@@ -37,7 +37,7 @@ def bot():
     )
     repo = git_connection.get_repo(f"{owner}/{repo_name}")
 
-    issue = repo.get_issue(number=payload['pull_request']['number'])
+    issue = repo.get_issue(number=payload['issues']['number'])
 
     response = requests.get(url='https://meme-api.herokuapp.com/gimme')
     if response.status_code != 200:
