@@ -19,8 +19,8 @@ git_integration = GithubIntegration(
     app_key,
 )
 
-
-
+# post a meme when an issue is created
+"""
 @app.route("/", methods=['POST'])
 def bot():
     payload = request.json
@@ -47,6 +47,29 @@ def bot():
 
     meme_url = response.json()['preview'][-1]
     issue.create_comment(f"![Alt Text]({meme_url})")
+    return "ok"
+"""
+
+#close all the opened issues when a new issue with "close all" body is created
+@app.route("/", methods=['POST'])
+def bot():
+    payload = request.json
+
+    if all(k in payload.keys() for k in ['action', 'issue']) and payload['action'] == 'opened' and payload['issue']['body'] == 'close all':
+
+        owner = payload['repository']['owner']['login']
+        repo_name = payload['repository']['name']
+
+        git_connection = Github(
+            login_or_token=git_integration.get_access_token(
+                git_integration.get_installation(owner, repo_name).id
+            ).token
+        )
+        repo = git_connection.get_repo(f"{owner}/{repo_name}")
+
+        for issue in repo.get_issues(state='open'):
+            issue.edit(state='closed')
+
     return "ok"
 
 
