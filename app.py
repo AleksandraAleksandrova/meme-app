@@ -80,7 +80,9 @@ def bot():
 
     if 'commits' in payload and 'before' in payload and 'after' in payload:
         owner = payload['repository']['owner']['login']
+        print("owner is ", owner)
         repo_name = payload['repository']['name']
+        print("repo name is ", repo_name)
         commits = payload['commits']
 
         git_connection = Github(
@@ -93,8 +95,10 @@ def bot():
         for commit in commits:
             commit_sha = commit['id']
             commit_message = commit['message']
+            print("commit message is ", commit_message)
             commit_url = commit['url']
             author_name = commit['author']['name']
+            print("author is ", author_name)
             author_email = commit['author']['email']
 
             comment_body = f"""
@@ -108,4 +112,4 @@ def bot():
     return "ok"
 
 if __name__ == "__main__":
-    app.run(debug=False, port=5000)
+    app.run(debug=True, port=5000)
