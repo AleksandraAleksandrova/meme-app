@@ -50,7 +50,8 @@ def bot():
     return "ok"
 """
 
-#close all the opened issues when a new issue with "close all" body is created
+# close all the opened issues when a new issue with "close all" body is created
+"""
 @app.route("/", methods=['POST'])
 def bot():
     payload = request.json
@@ -71,7 +72,40 @@ def bot():
             issue.edit(state='closed')
 
     return "ok"
+"""
 
+@app.route("/", methods=['POST'])
+def bot():
+    payload = request.json
+
+    if 'push' in payload['event']:
+        owner = payload['repository']['owner']['login']
+        repo_name = payload['repository']['name']
+        commits = payload['commits']
+
+        git_connection = Github(
+            login_or_token=git_integration.get_access_token(
+                git_integration.get_installation(owner, repo_name).id
+            ).token
+        )
+        repo = git_connection.get_repo(f"{owner}/{repo_name}")
+
+        for commit in commits:
+            commit_sha = commit['id']
+            commit_message = commit['message']
+            commit_url = commit['url']
+            author_name = commit['author']['name']
+            author_email = commit['author']['email']
+
+            comment_body = f"""
+                New commit pushed by {author_name} ({author_email}):
+                Commit message: {commit_message}
+                Commit URL: {commit_url}
+                """
+
+            repo.get_commit(commit_sha).create_comment(comment_body)
+
+    return "ok"
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5000)
