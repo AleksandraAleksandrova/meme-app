@@ -74,15 +74,14 @@ def bot():
     return "ok"
 """
 
+# add a comment (message, author, etc) on each new commit on push
 @app.route("/", methods=['POST'])
 def bot():
     payload = request.json
 
     if 'commits' in payload and 'before' in payload and 'after' in payload:
         owner = payload['repository']['owner']['login']
-        print("owner is ", owner)
         repo_name = payload['repository']['name']
-        print("repo name is ", repo_name)
         commits = payload['commits']
 
         git_connection = Github(
@@ -95,10 +94,8 @@ def bot():
         for commit in commits:
             commit_sha = commit['id']
             commit_message = commit['message']
-            print("commit message is ", commit_message)
             commit_url = commit['url']
             author_name = commit['author']['name']
-            print("author is ", author_name)
             author_email = commit['author']['email']
 
             comment_body = f"""
