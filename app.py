@@ -78,7 +78,7 @@ def bot():
 def bot():
     payload = request.json
 
-    if 'push' in payload['event']:
+    if 'commits' in payload and 'before' in payload and 'after' in payload:
         owner = payload['repository']['owner']['login']
         repo_name = payload['repository']['name']
         commits = payload['commits']
