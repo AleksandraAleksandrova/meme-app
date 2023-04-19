@@ -1,54 +1,48 @@
-// this app is doing the same as app.py
-// but it is written in JS and it uses the Octokit library
-
-import { appID, pemPath, whSecret} from './config.mjs';
-import { Octokit } from '@octokit/rest';
-import { createAppAuth } from '@octokit/auth-app';
-import { readFileSync } from 'fs';
-import { Webhooks } from '@octokit/webhooks';
-import http from 'http';
-import axios from 'axios';
+import { readFileSync } from 'node:fs';
+import { appId, pemPath } from './config.mjs';
+import express from 'express';
+import { App } from "octokit";
 
 const privateKey = readFileSync(pemPath);
 
-const auth = createAppAuth({
-  appId: appID,
-  privateKey: privateKey.toString(),
+const server = express();
+server.use(express.json());
+
+const app = new App({
+  appId: appId,
+  privateKey: privateKey,
 });
 
-const octokit = new Octokit();
-octokit.auth = auth;
+server.post("/", async (req, res) => {
+  const event = req.headers["x-github-event"];
+  const payload = req.body;
+  const owner = payload.repository.owner.login;
+  const repo_name = payload.repository.name;
+  const installationId = payload.installation.id;
 
-const webhooks = new Webhooks({
-  secret: whSecret,
-});
-
-const server = http.createServer(webhooks.middleware);
-server.listen(5000, () => {
-  console.log('Webhook server started on port 5000');
-});
-
-webhooks.on("issues", async ({ id, name, payload }) => {
-  console.log("event is issues")
-  if(payload.action === 'opened'){
-    console.log("the action  is opened")
-    const issue_number = payload.issue.number;
-
-    const { data } = await axios.get('https://meme-api.com/gimme');
-    console.log("fetched a meme")
-
-    const response = await octokit.issues.createComment({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number,
-      body: `**${data.title}**\n\n![${data.title}](${data.url})`,
-    });
-    console.log("comment must be ok")
-
-  } else {
-    console.log(`Received unsupported event: ${payload.action}`);
+  if (payload.action != 'opened' || event != 'issues') {
+    console.log("not supported event and action right now")
+    return res.send("ok");
   }
-  
+
+  const octokit = await app.getInstallationOctokit(installationId);
+  const repo = await octokit.rest.repos.get({ owner, repo: repo_name });
+
+  /*
+  const response = await fetch('https://meme-api.com/gimme');
+  if (!response.ok) {
+      return res.send('ok');
+  }
+
+  const meme_url = (await response.json()).preview.slice(-1)[0];
+  await octokit.rest.issues.createComment({ owner, repo: repo_name, issue_number: payload.issue.number, body: `![Alt Text](${meme_url})` });
+  return res.send("ok");
+*/
 });
 
-// This code doesn't work yet, smee channel didn't get any kind of event so no payload was received and no actions were performed
+
+server.listen(5000, () => {
+  console.log(`Server listening on port 5000`);
+});
+
+
