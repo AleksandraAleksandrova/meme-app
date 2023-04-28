@@ -1,7 +1,7 @@
 import os
 import requests
 from flask import Flask, request
-from github import GithubIntegration, Github
+from github import GithubIntegration
 import vars
 
 app = Flask(__name__)
